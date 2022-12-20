@@ -1,4 +1,4 @@
-name: Build Fusion Module
+name: Build FlightControl Module
 
 on:
   workflow_dispatch:
@@ -14,4 +14,4 @@ jobs:
   build:
     uses: bellflight/github-actions/.github/workflows/avr_build_and_push_container.yml@main
     with:
-      container_name: fusion
+      container_name: flightcontrol
