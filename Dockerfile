@@ -1,9 +1,8 @@
-FROM docker.io/library/python:3.11-bullseye
+# grpcio only has aarch64 builds for python 3.10
+FROM docker.io/library/python:3.10-bullseye
 
 ENV MAVLINK20=1
 ENV MAVLINK_DIALECT=bell
-# https://github.com/grpc/grpc/issues/21283#issuecomment-624490050
-ENV GRPC_PYTHON_BUILD_EXT_COMPILER_JOBS=8
 
 WORKDIR /app
 
