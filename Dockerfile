@@ -1,5 +1,8 @@
 FROM docker.io/library/python:3.11-buster
 
+ENV MAVLINK20=1
+ENV MAVLINK_DIALECT=bell
+
 WORKDIR /app
 
 RUN apt-get update -y
@@ -12,14 +15,6 @@ RUN apt-get install -y \
 COPY requirements.txt requirements.txt
 RUN python -m pip install pip wheel --upgrade && \
     python -m pip install -r requirements.txt
-
-COPY pymavlink* /app/
-
-ENV MAVLINK20=1
-ENV MAVLINK_DIALECT=bell
-
-# need to install from source as it's difficult to generate a .whl file for ARM
-RUN python -m pip install /app/pymavlink*.tar.gz
 
 COPY . .
 
