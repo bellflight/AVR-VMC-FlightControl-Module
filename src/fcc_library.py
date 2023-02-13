@@ -258,7 +258,6 @@ class FlightControlComputer(FCMMQTTModule):
         """
         logger.debug("battery_telemetry loop started")
         async for battery in self.drone.telemetry.battery():
-
             update = AvrFcmBatteryPayload(
                 voltage=battery.voltage_v,
                 soc=battery.remaining_percent * 100.0,
@@ -283,7 +282,6 @@ class FlightControlComputer(FCMMQTTModule):
         was_armed = False
         logger.debug("is_armed loop started")
         async for armed in self.drone.telemetry.armed():
-
             # if the arming status is different than last time
             if armed != was_armed:
                 if armed:
@@ -352,7 +350,6 @@ class FlightControlComputer(FCMMQTTModule):
         logger.debug("flight_mode_telemetry loop started")
 
         async for mode in self.drone.telemetry.flight_mode():
-
             update = AvrFcmStatusPayload(
                 mode=str(mode),
                 armed=self.is_armed,
@@ -376,7 +373,6 @@ class FlightControlComputer(FCMMQTTModule):
         """
         logger.debug("position_ned telemetry loop started")
         async for position in self.drone.telemetry.position_velocity_ned():
-
             n = position.position.north_m
             e = position.position.east_m
             d = position.position.down_m
