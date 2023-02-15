@@ -1,28 +1,27 @@
 import asyncio
 import math
-from typing import Dict, Literal, Optional
+from typing import Literal
 
 import mavsdk
 from bell.avr.mqtt.client import MQTTModule
 from bell.avr.mqtt.payloads import (
     AVRFCMAirborne,
     AVRFCMArmed,
+    AVRFCMAttitudeEulerDegrees,
     AVRFCMBattery,
     AVRFCMFlightMode,
+    AVRFCMGPSInfo,
+    AVRFCMHILGPSStats,
     AVRFCMLanded,
-    AVRFCMPositionLocal,
     AVRFCMPositionGlobal,
     AVRFCMPositionHome,
-    AVRFCMAttitudeEulerDegrees,
+    AVRFCMPositionLocal,
     AVRFCMVelocity,
-    AVRFCMGPSInfo,
     AVRFusionHILGPSMessage,
-    AVRFCMHILGPSStats,
 )
 from bell.avr.utils.decorators import async_try_except, try_except
 from bell.avr.utils.timing import rate_limit
 from loguru import logger
-from mavsdk.telemetry import LandedState, FlightMode, FixType
 from pymavlink import mavutil
 
 
@@ -115,68 +114,24 @@ class FlightControlComputer(MQTTModule):
     async def landed_state_telemetry(self) -> None:
         logger.debug("landed_state loop started")
 
-        lookup: Dict[
-            Optional[LandedState],
-            Literal["UNKNOWN", "ON_GROUND", "IN_AIR", "TAKING_OFF", "LANDING"],
-        ] = {
-            None: "UNKNOWN",
-            LandedState.UNKNOWN: "UNKNOWN",
-            LandedState.ON_GROUND: "ON_GROUND",
-            LandedState.IN_AIR: "IN_AIR",
-            LandedState.TAKING_OFF: "TAKING_OFF",
-            LandedState.LANDING: "LANDING",
-        }
-
         async for landed_state in self.drone.telemetry.landed_state():
-            self.send_message(
-                "avr/fcm/landed", AVRFCMLanded(landed=lookup[landed_state])
-            )
+            landed_state_str = "UNKNOWN"
+            if landed_state is not None:
+                landed_state_str = landed_state.name
+
+            self.send_message("avr/fcm/landed", AVRFCMLanded(landed=landed_state_str))
 
     @async_try_except()
     async def flight_mode_telemetry(self) -> None:
         logger.debug("flight_mode telemetry loop started")
 
-        lookup: Dict[
-            Optional[FlightMode],
-            Literal[
-                "UNKNOWN",
-                "READY",
-                "TAKEOFF",
-                "HOLD",
-                "MISSION",
-                "RETURN_TO_LAUNCH",
-                "LAND",
-                "OFFBOARD",
-                "FOLLOW_ME",
-                "MANUAL",
-                "ALTCTL",
-                "POSCTL",
-                "ACRO",
-                "STABILIZED",
-                "RATTITUDE",
-            ],
-        ] = {
-            None: "UNKNOWN",
-            FlightMode.UNKNOWN: "UNKNOWN",
-            FlightMode.READY: "READY",
-            FlightMode.TAKEOFF: "TAKEOFF",
-            FlightMode.HOLD: "HOLD",
-            FlightMode.MISSION: "MISSION",
-            FlightMode.RETURN_TO_LAUNCH: "RETURN_TO_LAUNCH",
-            FlightMode.LAND: "LAND",
-            FlightMode.OFFBOARD: "OFFBOARD",
-            FlightMode.FOLLOW_ME: "FOLLOW_ME",
-            FlightMode.MANUAL: "MANUAL",
-            FlightMode.ALTCTL: "ALTCTL",
-            FlightMode.POSCTL: "POSCTL",
-            FlightMode.ACRO: "ACRO",
-            FlightMode.STABILIZED: "STABILIZED",
-            FlightMode.RATTITUDE: "RATTITUDE",
-        }
-
         async for flight_mode in self.drone.telemetry.flight_mode():
+            flight_mode_str = "UNKNOWN"
+            if flight_mode is not None:
+                flight_mode_str = flight_mode.name
+
             self.send_message(
-                "avr/fcm/flight_mode", AVRFCMFlightMode(flight_mode=lookup[flight_mode])
+                "avr/fcm/flight_mode", AVRFCMFlightMode(flight_mode=flight_mode_str)
             )
 
     @async_try_except()
@@ -263,34 +218,24 @@ class FlightControlComputer(MQTTModule):
     async def gps_info_telemetry(self) -> None:
         logger.debug("gps_info telemetry loop started")
 
-        lookup: Dict[
-            Optional[FixType],
-            Literal[
-                "NO_GPS",
-                "NO_FIX",
-                "FIX_2D",
-                "FIX_3D",
-                "FIX_DGPS",
-                "RTK_FLOAT",
-                "RTK_FIXED",
-            ],
-        ] = {
-            None: "NO_GPS",
-            FixType.NO_GPS: "NO_GPS",
-            FixType.NO_FIX: "NO_FIX",
-            FixType.FIX_2D: "FIX_2D",
-            FixType.FIX_3D: "FIX_3D",
-            FixType.FIX_DGPS: "FIX_DGPS",
-            FixType.RTK_FLOAT: "RTK_FLOAT",
-            FixType.RTK_FIXED: "RTK_FIXED",
-        }
-
         async for gps_info in self.drone.telemetry.gps_info():
+            gps_fix_str = "NO_GPS"
+            if gps_info.fix_type is not None:
+                gps_fix_str: Literal[
+                    "NO_GPS",
+                    "NO_FIX",
+                    "FIX_2D",
+                    "FIX_3D",
+                    "FIX_DGPS",
+                    "RTK_FLOAT",
+                    "RTK_FIXED",
+                ] = gps_info.fix_type.name  # type: ignore
+
             self.send_message(
                 "avr/fcm/gps/info",
                 AVRFCMGPSInfo(
                     visible_satellites=gps_info.num_satellites,
-                    fix_type=lookup[gps_info.fix_type],
+                    fix_type=gps_fix_str,
                 ),
             )
 
