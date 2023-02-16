@@ -21,8 +21,12 @@ from bell.avr.mqtt.payloads import (
 )
 from bell.avr.utils.decorators import async_try_except, try_except
 from bell.avr.utils.timing import rate_limit
+from bell.avr.utils.env import get_int
 from loguru import logger
 from pymavlink import mavutil
+
+MAVLINK_UDP_1 = get_int("MAVLINK_UDP_1", 14541)
+MAVLINK_UDP_2 = get_int("MAVLINK_UDP_2", 14542)
 
 
 class FlightControlComputer(MQTTModule):
@@ -46,7 +50,7 @@ class FlightControlComputer(MQTTModule):
         # logging.basicConfig(level=logging.DEBUG)
 
         # mavsdk does not support dns
-        await self.drone.connect(system_address="udp://0.0.0.0:14541")
+        await self.drone.connect(system_address=f"udp://0.0.0.0:{MAVLINK_UDP_1}")
 
         logger.success("Connected to the FCC")
 
@@ -258,7 +262,7 @@ class PyMAVLinkAgent(MQTTModule):
 
         # this NEEDS to be using UDP, TCP proved extremely unreliable
         self.mavcon = mavutil.mavlink_connection(
-            "udpin:0.0.0.0:14542", source_system=142, dialect="bell"
+            f"udpin:0.0.0.0:{MAVLINK_UDP_2}", source_system=142, dialect="bell"
         )
 
         logger.debug("Waiting for Mavlink heartbeat")
