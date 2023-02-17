@@ -102,7 +102,7 @@ Schema:
     "payload": {
         "lat": <decimal_degrees_lat>,
         "lon": <decimal_degrees_lon>,
-        "alt": <float_meters>,
+        "alt": <float_meters_MSL>,
         "heading": <decimal degrees heading>
     }
 }
@@ -119,13 +119,13 @@ Schema:
         "type": "goto",
         "lat": <decimal_degrees_lat>,
         "lon": <decimal_degrees_lon>,
-        "alt": <float_meters>,
+        "alt": <float_meters_relative_takeoff>,
     },
     {
         "type": "goto",
         "lat": <decimal_degrees_lat>,
         "lon": <decimal_degrees_lon>,
-        "alt": <float_meters>,
+        "alt": <float_meters_relative_takeoff>,
     }
 ]
     }
