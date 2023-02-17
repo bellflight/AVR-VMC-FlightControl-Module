@@ -288,10 +288,10 @@ class ControlManager(FCMMQTTModule):
         """
         mission_items = []
 
-        # if the first waypoint is not a takeoff waypoint, create one
-        if waypoints[0]["type"] != "takeoff":
-            # use the altitude of the first waypoint
-            waypoints.insert(0, {"type": "takeoff", "alt": waypoints[0]["alt"]})
+        # # if the first waypoint is not a takeoff waypoint, create one
+        # if waypoints[0]["type"] != "takeoff":
+        #     # use the altitude of the first waypoint
+        #     waypoints.insert(0, {"type": "takeoff", "alt": waypoints[0]["alt"]})
 
         # now, check if first waypoint has a lat/lon
         # and if not, add lat lon of current position

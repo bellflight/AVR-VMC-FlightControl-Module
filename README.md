@@ -44,3 +44,99 @@ poetry shell
 ```
 
 to activate the virtual environment.
+
+
+# MQTT Endpoints
+Topic: `/avr/fcm/actions/`
+
+### Arm
+
+Schema: 
+```json
+{
+    "action": "arm",
+    "payload": {}
+}
+```
+
+### Disarm
+
+Schema: 
+```json
+{
+    "action": "disarm",
+    "payload": {}
+}
+```
+
+### Kill 
+Schema: 
+```json
+{
+    "action": "kill",
+    "payload": {}
+}
+```
+### Land
+Schema: 
+```json
+{
+    "action": "land",
+    "payload": {}
+}
+```
+### Reboot
+Schema: 
+```json
+{
+    "action": "reboot",
+    "payload": {}
+}
+```
+
+### Go To Location
+Schema: 
+```json
+{
+    "action": "goto_location",
+    "payload": {
+        "lat": <decimal_degrees_lat>,
+        "lon": <decimal_degrees_lon>,
+        "alt": <float_meters>,
+        "heading": <decimal degrees heading>
+    }
+}
+```
+
+### Upload Mission
+Schema: 
+```json
+{
+    "action": "upload_mission",
+    "payload": {
+        "waypoints": [
+    {
+        "type": "goto",
+        "lat": <decimal_degrees_lat>,
+        "lon": <decimal_degrees_lon>,
+        "alt": <float_meters>,
+    },
+    {
+        "type": "goto",
+        "lat": <decimal_degrees_lat>,
+        "lon": <decimal_degrees_lon>,
+        "alt": <float_meters>,
+    }
+]
+    }
+}
+```
+
+### Start Mission
+Schema: 
+```json
+{
+    "action": "start_mission",
+    "payload": {}
+}
+```
