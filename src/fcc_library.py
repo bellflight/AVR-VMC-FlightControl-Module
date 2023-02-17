@@ -21,12 +21,12 @@ from bell.avr.mqtt.payloads import (
 )
 from bell.avr.utils.decorators import async_try_except, try_except
 from bell.avr.utils.timing import rate_limit
-from bell.avr.utils.env import get_int
+from bell.avr.utils.env import get_env_int
 from loguru import logger
 from pymavlink import mavutil
 
-MAVLINK_UDP_1 = get_int("MAVLINK_UDP_1", 14541)
-MAVLINK_UDP_2 = get_int("MAVLINK_UDP_2", 14542)
+MAVLINK_UDP_1 = get_env_int("MAVLINK_UDP_1", 14541)
+MAVLINK_UDP_2 = get_env_int("MAVLINK_UDP_2", 14542)
 
 
 class FlightControlComputer(MQTTModule):
