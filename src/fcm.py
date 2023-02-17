@@ -1,20 +1,31 @@
 import asyncio
 
-from fcc_library import FlightControlComputer, PyMAVLinkAgent
-
+from fcc_control import ControlManager
+from fcc_mission import MissionManager
+from fcc_telemetry import TelemetryManager
+from fcc_hil_gps import HILGPSManager
 
 class FlightControlModule:
     def __init__(self) -> None:
         super().__init__()
 
         # create the FCC objects
-        self.fcc = FlightControlComputer()
-        self.gps_fcc = PyMAVLinkAgent()
+        self.control_manager = ControlManager()
+        self.mission_manager = MissionManager()
+        self.hil_gps_manager = HILGPSManager()
+        self.telemetry_manager = TelemetryManager()
+
 
     async def run(self) -> None:
-        self.gps_fcc.run_non_blocking()
+        
+        #self.mission_manager.run_non_blocking()
+        #self.hil_gps_manager.run_non_blocking()
+        await self.telemetry_manager.run_non_blocking()
 
-        asyncio.gather(self.fcc.run_non_blocking())
+        asyncio.gather(
+            self.telemetry_manager.run_non_blocking(),
+            #self.control_manager.run_non_blocking()
+        )
 
         while True:
             await asyncio.sleep(1)

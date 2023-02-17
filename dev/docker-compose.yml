@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  # mavp2p:
+  #   image: ghcr.io/bellflight/vrc_mavp2p:latest
+  #   command: tcps:0.0.0.0:5760 udpc:127.0.0.1:14541 udpc:127.0.0.1:14542 --print-errors
+  #   restart: unless-stopped
+  #   #network_mode: "host"
+
+  mqtt:
+    image: docker.io/library/eclipse-mosquitto:2.0.11
+    ports:
+      - "18830:18830"
+    restart: on-failure
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+  
+
+  px4:
+    build:
+      context: ./px4_sitl
+      dockerfile: ./Dockerfile
+    stdin_open: True # docker run -i
+    tty: True        # docker run -t
+    network_mode: "host"
+    restart: on-failure
+  
+  fcc:
+    depends_on:
+      - mqtt
+      - px4
+    # image: ghcr.io/bellflight/vrc_flight_control_module:latest
+    build:
+      context: ../
+      dockerfile: ./Dockerfile
+    network_mode: "host"
+    restart: on-failure
+  
+  
+    
