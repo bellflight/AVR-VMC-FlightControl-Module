@@ -20,7 +20,7 @@ from bell.avr.utils.decorators import async_try_except, try_except
 from bell.avr.utils.timing import rate_limit
 from loguru import logger
 from fcc_mqtt import FCMMQTTModule
-
+import sys
 
 
 class TelemetryManager(FCMMQTTModule):
@@ -28,7 +28,7 @@ class TelemetryManager(FCMMQTTModule):
         super().__init__()
 
         # mavlink stuff
-        self.drone = mavsdk.System(sysid=141)
+        self.drone = mavsdk.System(sysid=142)
 
         # current state of offboard mode, acts as a backup for PX4
         self.offboard_enabled = False
@@ -43,14 +43,14 @@ class TelemetryManager(FCMMQTTModule):
         """
         Connect the Drone object.
         """
-        logger.debug("Connecting to the FCC")
+        logger.debug("Telemetry: Connecting to the FCC")
 
         # un-comment to show mavsdk server logging
         # import logging
         # logging.basicConfig(level=logging.DEBUG)
 
         # mavsdk does not support dns
-        await self.drone.connect(system_address="udp://127.0.0.1:14542")
+        await self.drone.connect(system_address="tcp://127.0.0.1:5761")
 
         logger.success("Telemetry: Connected to the FCC")
         self._publish_event("fcc_telemetry_connected_event")
@@ -70,6 +70,11 @@ class TelemetryManager(FCMMQTTModule):
         return asyncio.gather(
             self.telemetry_tasks(),
         )
+    
+    async def run(self) -> asyncio.Future:
+        asyncio.gather(self.run_non_blocking())
+        while True:
+            await asyncio.sleep(1)
 
     # region ###################  T E L E M E T R Y ###########################
 
@@ -347,3 +352,8 @@ class TelemetryManager(FCMMQTTModule):
             self.send_message("avr/fcm/gps_info", update) #type: ignore
 
     # endregion ###############################################################
+
+if __name__ == "__main__":
+    telemetry = TelemetryManager()
+    asyncio.run(telemetry.run())
+

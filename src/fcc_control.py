@@ -7,15 +7,18 @@ import time
 from typing import Any, Callable, List
 
 import mavsdk
+from mavsdk.geofence import Point, Polygon
+from mavsdk.mission_raw import MissionItem, MissionRawError
+from pymavlink import mavutil
+
 from bell.avr.mqtt.client import MQTTModule
-from bell.avr.mqtt.payloads import (
-    AvrFcmEventsPayload
-)
+from bell.avr.mqtt.payloads import AvrFcmEventsPayload
 from bell.avr.utils.decorators import async_try_except, try_except
 from bell.avr.utils.timing import rate_limit
 from loguru import logger
 from mavsdk.action import ActionError
 from fcc_mqtt import FCMMQTTModule
+import sys
 
 
 class DispatcherBusy(Exception):
@@ -75,15 +78,18 @@ class DispatcherManager(FCMMQTTModule):
         except Exception:
             logger.exception("ERROR IN TASK WAITER")
 
+
 class ControlManager(FCMMQTTModule):
     def __init__(self) -> None:
         super().__init__()
 
         # mavlink stuff
-        self.drone = mavsdk.System(sysid=142)
+        self.drone = mavsdk.System(sysid=141)
 
         # queues
         self.action_queue = queue.Queue()
+
+        self.topic_map = {"avr/fcm/actions": self.handle_action_message}
 
     async def connect(self) -> None:
         """
@@ -91,51 +97,10 @@ class ControlManager(FCMMQTTModule):
         """
         logger.debug("Control: Connecting to the FCC")
 
-        # un-comment to show mavsdk server logging
-        # import logging
-        # logging.basicConfig(level=logging.DEBUG)
-
         # mavsdk does not support dns
-        await self.drone.connect(system_address="udp://127.0.0.1:14541")
+        await self.drone.connect(system_address="tcp://127.0.0.1:5761")
 
         logger.success("Connected to the FCC")
-
-    async def async_queue_action(
-        self, queue_: queue.Queue, action: Callable, frequency: int = 10
-    ) -> None:
-        """
-        Creates a while loop that continously tries to pull a dict from a queue
-        and do something with it at a set frequency.
-
-        The given function needs to accept a single argument of the protobuf object
-        and be async.
-
-        Setting the frequency to 0 will always run the action.
-        """
-        last_time = time.time()
-
-        # this particular design will constantly get messages from the queue,
-        # even if they are not used, just to try and process them as fast
-        # as possible to prevent the queue from filling
-
-        while True:
-            try:
-                # get the next item from the queue
-                data = queue_.get_nowait()
-                # if the frequency is 0, or the time since our last run is greater
-                # than the frequency, run
-                if frequency == 0 or time.time() - last_time > (1 / frequency):
-                    # call function
-                    await action(data)
-                    # reset timer
-                    last_time = time.time()
-
-            except queue.Empty:
-                # if the queue was empty, just wait
-                await asyncio.sleep(0.01)
-
-            except Exception:
-                logger.exception("Unexpected error in async_queue_action")
 
     async def run_non_blocking(self) -> asyncio.Future:
         """
@@ -156,7 +121,15 @@ class ControlManager(FCMMQTTModule):
             self.action_dispatcher(),
         )
 
+    async def run(self) -> asyncio.Future:
+        asyncio.gather(self.run_non_blocking())
+        while True:
+            await asyncio.sleep(1)
+
     # region ################## D I S P A T C H E R  ##########################
+
+    def handle_action_message(self, payload):
+        self.action_queue.put(payload)
 
     @async_try_except()
     async def action_dispatcher(self) -> None:
@@ -170,7 +143,10 @@ class ControlManager(FCMMQTTModule):
             "kill": self.set_kill,
             "land": self.set_land,
             "reboot": self.set_reboot,
-            "takeoff": self.set_takeoff
+            "takeoff": self.set_takeoff,
+            "goto_location": self.goto_location,
+            "upload_mission": self.build_and_upload,
+            "start_mission": self.start_mission,
         }
 
         dispatcher = DispatcherManager()
@@ -184,17 +160,18 @@ class ControlManager(FCMMQTTModule):
                 if action["payload"] == "":
                     action["payload"] = "{}"
 
-                if action["name"] in action_map:
-                    payload = json.loads(action["payload"])
+                if action["action"] in action_map:
+                    # payload = json.loads(action["payload"])
+                    payload = action["payload"]
                     await dispatcher.schedule_task(
-                        action_map[action["name"]], payload, action["name"]
+                        action_map[action["action"]], payload, action["action"]
                     )
                 else:
                     logger.warning(f"Unknown action: {action['name']}")
 
             except DispatcherBusy:
                 logger.info("I'm busy running another task, try again later")
-                self._publish_event("fcc_busy_event", payload=action["name"])
+                self._publish_event("fcc_busy_event", payload=action["action"])
 
             except queue.Empty:
                 await asyncio.sleep(0.1)
@@ -281,15 +258,186 @@ class ControlManager(FCMMQTTModule):
         await self.simple_action_executor(self.drone.action.reboot, "reboot")
 
     @async_try_except(reraise=True)
-    async def set_takeoff(self, takeoff_alt: float, **kwargs) -> None:
+    async def set_takeoff(self, **kwargs) -> None:
         """
         Commands the drone to takeoff to the given altitude.
         Will arm the drone if it is not already.
         """
-        logger.info(f"Setting takeoff altitude to {takeoff_alt}")
-        await self.drone.action.set_takeoff_altitude(takeoff_alt)
+        alt = kwargs["alt"]
+        logger.info(f"Setting takeoff altitude to {alt}")
+        await self.drone.action.set_takeoff_altitude(alt)
         await self.set_arm()
         logger.info("Sending takeoff command")
         await self.simple_action_executor(self.drone.action.takeoff, "takeoff")
 
+    @async_try_except(reraise=True)
+    async def goto_location(self, **kwargs) -> None:
+        """
+        Commands the drone to go to a location.
+        """
+        logger.warning("Sending go to location")
+        await self.drone.action.goto_location(
+            kwargs["lat"], kwargs["lon"], kwargs["alt"], kwargs["heading"]
+        )
+
+    @async_try_except(reraise=True)
+    async def build(self, waypoints: List[dict]) -> List[MissionItem]:
+        # sourcery skip: hoist-statement-from-loop, switch, use-assigned-variable
+        """
+        Convert a list of waypoints (dict) to a list of MissionItems.
+        """
+        mission_items = []
+
+        # if the first waypoint is not a takeoff waypoint, create one
+        if waypoints[0]["type"] != "takeoff":
+            # use the altitude of the first waypoint
+            waypoints.insert(0, {"type": "takeoff", "alt": waypoints[0]["alt"]})
+
+        # now, check if first waypoint has a lat/lon
+        # and if not, add lat lon of current position
+        waypoint_0 = waypoints[0]
+        if "lat" not in waypoints[0] or "lon" not in waypoints[0]:
+            # get the next update from the raw gps and use that
+            # .position() only updates on new positions
+            position = await self.drone.telemetry.raw_gps().__anext__()
+            waypoint_0["lat"] = position.latitude_deg
+            waypoint_0["lon"] = position.longitude_deg
+
+        # convert the dicts into mission_raw.MissionItems
+        for seq, waypoint in enumerate(waypoints):
+            waypoint_type = waypoint["type"]
+
+            # https://mavlink.io/en/messages/common.html#MISSION_ITEM_INT
+            command = None
+            param1 = None
+            param2 = None
+            param3 = None
+            param4 = None
+
+            if waypoint_type == "takeoff":
+                # https://mavlink.io/en/messages/common.html#MAV_CMD_NAV_TAKEOFF
+                command = mavutil.mavlink.MAV_CMD_NAV_TAKEOFF
+                param1 = 0  # pitch
+                param2 = float("nan")  # empty
+                param3 = float("nan")  # empty
+                param4 = float("nan")  # yaw angle. NaN uses current yaw heading mode
+
+            elif waypoint_type == "goto":
+                # https://mavlink.io/en/messages/common.html#MAV_CMD_NAV_WAYPOINT
+                command = mavutil.mavlink.MAV_CMD_NAV_WAYPOINT
+                param1 = 0  # hold time
+                param2 = 0  # accepteance radius
+                param3 = 0  # pass radius, 0 goes straight through
+                param4 = float("nan")  # yaw angle. NaN uses current yaw heading mode
+
+            elif waypoint_type == "land":
+                # https://mavlink.io/en/messages/common.html#MAV_CMD_NAV_LAND
+                command = mavutil.mavlink.MAV_CMD_NAV_LAND
+                param1 = 0  # abort altitude, 0 uses system default
+                # https://mavlink.io/en/messages/common.html#PRECISION_LAND_MODE
+                # precision landing mode
+                param2 = mavutil.mavlink.PRECISION_LAND_MODE_DISABLED
+                param3 = float("nan")  # empty
+                param4 = float("nan")  # yaw angle. NaN uses current yaw heading mode
+
+            # https://mavlink.io/en/messages/common.html#MAV_FRAME
+            frame = mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT
+            current = int(seq == 0)  # boolean
+            autocontinue = int(True)
+            x = int(float(waypoint["lat"]) * 10000000)
+            y = int(float(waypoint["lon"]) * 10000000)
+            z = float(waypoint["alt"])
+            # https://mavlink.io/en/messages/common.html#MAV_MISSION_TYPE
+            mission_type = mavutil.mavlink.MAV_MISSION_TYPE_MISSION
+
+            mission_items.append(
+                MissionItem(
+                    seq=seq,
+                    frame=frame,
+                    command=command,
+                    current=current,
+                    autocontinue=autocontinue,
+                    param1=param1,
+                    param2=param2,
+                    param3=param3,
+                    param4=param4,
+                    x=x,
+                    y=y,
+                    z=z,
+                    mission_type=mission_type,
+                )
+            )
+
+        return mission_items
+
+    @async_try_except(reraise=True)
+    async def upload(self, mission_items: List[MissionItem]) -> None:
+        """
+        Upload a given list of MissionItems to the drone.
+        """
+        try:
+            logger.info("Clearing existing mission on the drone")
+            await self.drone.mission_raw.clear_mission()
+            logger.info("Uploading mission items to drone")
+            await self.drone.mission_raw.upload_mission(mission_items)
+            self._publish_event("mission_upload_success_event")
+            logger.info("Mission Upload SUCESS")
+        except MissionRawError as e:
+            logger.warning(f"Mission upload failed because: {e._result.result_str}")
+            self._publish_event(
+                "mission_upload_failed_event", str(e._result.result_str)
+            )
+
+    @async_try_except(reraise=True)
+    async def build_and_upload(self, **kwargs) -> None:
+        """
+        Upload a list of waypoints (dict) to the done.
+        """
+        mission_plan = await self.build(kwargs["waypoints"])
+        await self.upload(mission_plan)
+
+    @async_try_except(reraise=True)
+    async def start_mission(self) -> None:
+        """
+        Commands the drone to start the current mission.
+        Drone must already be armed.
+        Will raise an exception if the active mission violates a geofence.
+        """
+        logger.info("Sending start mission command")
+        await self.drone.mission_raw.start_mission()
+
+    @async_try_except(reraise=True)
+    async def set_geofence(self, **kwargs) -> None:
+        """
+        Creates and uploads an inclusive geofence given min/max lat/lon.
+        """
+
+        min_lat = kwargs["min_lat"]
+        min_lon = kwargs["min_lon"]
+        max_lat = kwargs["max_lat"]
+        max_lon = kwargs["max_lon"]
+
+        logger.info(
+            f"Uploading geofence of ({min_lat}, {min_lon}), ({max_lat}, {max_lon})"
+        )
+
+        # need to create a rectangle, PX4 isn't quite smart enough
+        # to recognize only two corners
+        tl_point = Point(max_lat, min_lon)
+        tr_point = Point(max_lat, max_lon)
+        bl_point = Point(min_lat, min_lon)
+        br_point = Point(min_lat, max_lon)
+
+        fence = [
+            Polygon(
+                [tl_point, tr_point, bl_point, br_point], Polygon.FenceType.INCLUSION
+            )
+        ]
+        await self.drone.geofence.upload_geofence(fence)
+
     # endregion ###############################################################
+
+
+if __name__ == "__main__":
+    control = ControlManager()
+    asyncio.run(control.run())

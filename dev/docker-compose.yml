@@ -24,12 +24,11 @@ services:
     tty: True        # docker run -t
     network_mode: "host"
     restart: on-failure
-  
+
   fcc:
     depends_on:
       - mqtt
       - px4
-    # image: ghcr.io/bellflight/vrc_flight_control_module:latest
     build:
       context: ../
       dockerfile: ./Dockerfile

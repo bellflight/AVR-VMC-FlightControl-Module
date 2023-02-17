@@ -29,4 +29,6 @@ RUN python -m pip install pip wheel --upgrade \
 
 COPY src .
 
-CMD ["python", "fcm.py"]
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["/bin/bash", "-l", "-c", "./entrypoint.sh"]

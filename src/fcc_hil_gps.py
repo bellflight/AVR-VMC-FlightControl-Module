@@ -45,7 +45,7 @@ class HILGPSManager(FCMMQTTModule):
 
         # this NEEDS to be using UDP, TCP proved extremely unreliable
         self.mavcon = mavutil.mavlink_connection(
-            "udpout:127.0.0.1:14544", source_system=144, dialect="bell"
+            "udpout:127.0.0.1:14541", source_system=144, dialect="bell"
         )
 
         logger.debug("Waiting for Mavlink heartbeat")
