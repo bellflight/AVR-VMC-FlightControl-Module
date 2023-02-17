@@ -5,6 +5,7 @@ import math
 import queue
 import time
 from typing import Any, Callable, List
+import threading
 
 import mavsdk
 from bell.avr.mqtt.client import MQTTModule
@@ -38,6 +39,12 @@ class HILGPSManager(FCMMQTTModule):
         self.num_frames = 0
 
     @try_except()
+    def heartbeat(self) -> None:
+        while True:
+            self.mavcon.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER, mavutil.mavlink.MAV_AUTOPILOT_INVALID, 0, 0, 0)
+            time.sleep(1)
+
+    @try_except()
     def run_non_blocking(self) -> None:
         """
         Set up a mavlink connection and kick off any tasks
@@ -45,12 +52,20 @@ class HILGPSManager(FCMMQTTModule):
 
         # this NEEDS to be using UDP, TCP proved extremely unreliable
         self.mavcon = mavutil.mavlink_connection(
-            "udpout:127.0.0.1:14541", source_system=144, dialect="bell"
+            "udpout:127.0.0.1:14541", source_system=143, source_component=190, dialect="bell"
         )
 
-        logger.debug("Waiting for Mavlink heartbeat")
+
+        heartbeat_thread = threading.Thread(target=self.heartbeat)
+        heartbeat_thread.daemon = True
+        heartbeat_thread.start()
+        
+
+        logger.debug("HIL_GPS: Waiting for Mavlink heartbeat")
+        
         self.mavcon.wait_heartbeat()
-        logger.success("Mavlink heartbeat received")
+
+        logger.success("HIL_GPS: Mavlink heartbeat received")
 
         super().run_non_blocking()
 
@@ -87,3 +102,9 @@ class HILGPSManager(FCMMQTTModule):
             ), #type: ignore
             frequency=1,
         )
+
+if __name__ == "__main__":
+    gps = HILGPSManager()
+    gps.run_non_blocking()
+    while True:
+        time.sleep(.1)

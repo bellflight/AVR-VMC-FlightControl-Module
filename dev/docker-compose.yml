@@ -22,7 +22,10 @@ services:
       dockerfile: ./Dockerfile
     stdin_open: True # docker run -i
     tty: True        # docker run -t
-    network_mode: "host"
+    ports:
+      - "14541:14541/udp"
+      - "5760:5760"
+      - "5761:5761"
     restart: on-failure
 
   fcc:
