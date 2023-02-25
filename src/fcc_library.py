@@ -3,7 +3,7 @@ import math
 from typing import Literal
 
 import mavsdk
-from bell.avr.mqtt.client import MQTTModule
+from bell.avr.mqtt.module import MQTTModule
 from bell.avr.mqtt.payloads import (
     AVRFCMAirborne,
     AVRFCMArmed,
@@ -20,8 +20,8 @@ from bell.avr.mqtt.payloads import (
     AVRFusionHILGPSMessage,
 )
 from bell.avr.utils.decorators import async_try_except, try_except
-from bell.avr.utils.timing import rate_limit
 from bell.avr.utils.env import get_env_int
+from bell.avr.utils.timing import rate_limit
 from loguru import logger
 from pymavlink import mavutil
 
@@ -248,7 +248,7 @@ class PyMAVLinkAgent(MQTTModule):
     def __init__(self) -> None:
         super().__init__()
 
-        self.topic_map = {
+        self.topic_callbacks = {
             "avr/fusion/hil_gps/message": self.hilgps_msg_handler,
         }
 
