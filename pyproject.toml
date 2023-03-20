@@ -10,8 +10,8 @@
 [tool.poetry.dependencies]
     python             = ">=3.9,<3.12"
     loguru             = "^0.6.0"
-    bell-avr-libraries = { extras = ["mqtt"], version = "^0.1.12" }
-    mavsdk             = "^1.4.4"
+    bell-avr-libraries = "0.2.0a0"
+    mavsdk             = "^1.4.1"
     bell-avr-pymavlink = "^2.4.25"
 
 [tool.poetry.group.dev.dependencies]
