@@ -301,19 +301,19 @@ source = ["Cython (>=0.29.7)"]
 
 [[package]]
 name = "mavsdk"
-version = "1.4.4"
+version = "1.4.5"
 description = "Python wrapper for MAVSDK"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "mavsdk-1.4.4-py3-none-linux_armv6l.whl", hash = "sha256:2f04c65dbca613184bc43d1cd175e4240924c5ce2246067067044b23b580944c"},
-    {file = "mavsdk-1.4.4-py3-none-linux_armv7l.whl", hash = "sha256:ae76ceddf9883800ef518d897db3904dab4fc769a80c952617d393a7e36ed8af"},
-    {file = "mavsdk-1.4.4-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:9cc99a7c9a0d528e3ff83fee0cf407d4b62e79e6e5015af12a0f3825fb7dc3ea"},
-    {file = "mavsdk-1.4.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d745972611f681baa74d82f8dfd33a64d8f0effb0d3d4cb476be66d79961e6f1"},
-    {file = "mavsdk-1.4.4-py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8cec107068b31349700884cba02f961cc4eadc9db931397b345ca647f4e7b884"},
-    {file = "mavsdk-1.4.4-py3-none-win32.whl", hash = "sha256:204b35d6c51e72099058c9d061c30dbf9e60de2e1e9471db8e17e54f53046d45"},
-    {file = "mavsdk-1.4.4-py3-none-win_amd64.whl", hash = "sha256:bfb19aa3154d6cfd675949a0884b26b3d5fb5e2ccc99a630e0cddc6dc3243501"},
+    {file = "mavsdk-1.4.5-py3-none-linux_armv6l.whl", hash = "sha256:203ef23bd8573a984bc84e4e8cf7677628e5bbf2db47c0c8ce564dd661e9e442"},
+    {file = "mavsdk-1.4.5-py3-none-linux_armv7l.whl", hash = "sha256:816aa0f6e778cb8bc1858a81b24fd2b6dc8b9d483f5f183d53775632193faf58"},
+    {file = "mavsdk-1.4.5-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:a238f723fdb27797147eb31c46a3be74e3ce89e32c7c97faec4055d554b4edca"},
+    {file = "mavsdk-1.4.5-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4484da53c9ace30b8054d54587b90e8eec6a00c0641dcc0b89c77d559af18545"},
+    {file = "mavsdk-1.4.5-py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:24c70fec04cf5340309c2c1446a5f9110818b6d71e75caa2e7d921cbc12fb05a"},
+    {file = "mavsdk-1.4.5-py3-none-win32.whl", hash = "sha256:6722016396267cf85f8a06253a696357d4a989efd98f0a5d85477f2ddfebfff2"},
+    {file = "mavsdk-1.4.5-py3-none-win_amd64.whl", hash = "sha256:df3cbd098d3431e379361f6071d948957453e08cd20342a40bd4f120c22b844c"},
 ]
 
 [package.dependencies]
@@ -590,4 +590,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "860044e54b0009d8a90414417f788f5f742706cdcbea746fd8a5569ca566d646"
+content-hash = "1b2695fce3562c292030a01edfaa5672340b61014ca4866333fa8d5a301b5cf6"
