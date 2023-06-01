@@ -15,7 +15,7 @@
     bell-avr-pymavlink = "^2.4.25"
 
 [tool.poetry.group.dev.dependencies]
-    pre-commit = "^3.2.2"
+    pre-commit = "^3.3.2"
 
 [tool.pyright]
     typeCheckingMode = "basic"
