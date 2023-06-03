@@ -2,11 +2,12 @@ FROM docker.io/library/python:3.10 AS poetry-exporter
 
 WORKDIR /work
 
+RUN python -m pip install poetry
+
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN python -m pip install poetry \
- && poetry export -o requirements.txt
+RUN poetry export -o requirements.txt
 
 # grpcio only has aarch64 builds for python 3.10
 FROM docker.io/library/python:3.10-bullseye

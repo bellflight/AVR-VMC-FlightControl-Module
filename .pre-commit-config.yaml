@@ -15,26 +15,26 @@ repos:
         - --no-update
         id: poetry-lock
     repo: https://github.com/python-poetry/poetry
-    rev: 1.3.2
+    rev: 1.5.1
 -   hooks:
     -   args:
         - --fix
         id: ruff
     repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.246
+    rev: v0.0.270
 -   hooks:
     -   id: black
     repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
 -   hooks:
     -   id: pyleft
     repo: https://github.com/nathanvaughn/pyleft
-    rev: v1.1.4
+    rev: v1.2.1
 -   hooks:
     -   id: pyright
     repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.293
+    rev: v1.1.311
 -   hooks:
     -   id: markdownlint
     repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.33.0
+    rev: v0.34.0
