@@ -10,7 +10,7 @@
 [tool.poetry.dependencies]
     python             = ">=3.9,<3.12"
     loguru             = "^0.6.0"
-    bell-avr-libraries = "0.2.0a2"
+    bell-avr-libraries = "0.2.0a3"
     mavsdk             = "1.4.6"
     bell-avr-pymavlink = "^2.4.25"
 
