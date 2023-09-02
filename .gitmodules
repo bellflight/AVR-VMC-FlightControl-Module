@@ -1,0 +1,3 @@
+[submodule "typings/pymap3d"]
+	path = typings/pymap3d
+	url = https://github.com/bellflight/pymap3d-typings
