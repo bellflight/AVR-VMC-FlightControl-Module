@@ -90,9 +90,7 @@ class FlightControlComputer(MQTTModule):
         await self.connect()
 
         # start tasks
-        return asyncio.gather(
-            self.telemetry_tasks(),
-        )
+        return asyncio.gather(self.telemetry_tasks(), self.action_executor())
 
     async def telemetry_tasks(self) -> asyncio.Future:
         """
@@ -270,7 +268,10 @@ class FlightControlComputer(MQTTModule):
                 ),
             )
 
+    @async_try_except()
     async def action_executor(self) -> None:
+        logger.debug("action executor loop started")
+
         while True:
             try:
                 action: Coroutine = self.action_queue.get_nowait()
