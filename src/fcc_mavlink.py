@@ -214,8 +214,7 @@ class FlightControlComputer(MQTTModule):
             phi = attitude_euler.yaw_deg
 
             # do any necessary wrapping here
-            heading = (2 * math.pi) + phi if phi < 0 else phi
-            self.heading = math.degrees(heading)
+            self.heading = (2 * math.pi) + phi if phi < 0 else phi
 
             rate_limit(
                 lambda: self.send_message(
@@ -333,6 +332,10 @@ class FlightControlComputer(MQTTModule):
         self.action_queue.put(self.takeoff_action(payload.rel_alt))
 
     async def goto_position_global_action(self, payload: AVRFCMGoToGlobal) -> None:
+        # if no heading provided, use current heading
+        if payload.hdg is None:
+            payload.hdg = self.heading
+
         logger.info(
             f"Going to {payload.lat}, {payload.lon}, {payload.abs_alt} with heading {payload.hdg}"
         )
