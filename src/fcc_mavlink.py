@@ -361,15 +361,31 @@ class FlightControlComputer(MQTTModule):
 
             if not source_position:
                 logger.error(
-                    "Unable to complete goto request, drone position data not initialized"
+                    "Unable to complete goto request, global drone position data not initialized"
                 )
                 return
 
             # add in the absolute alt from home since alt is shown as relative for
             # current position and go to needs absolute
             source_position.abs_alt += home_position.abs_alt
+
+            # if altitude is not provided, use current altitude
+            if payload.d is None:
+                payload.d = 0
         else:
             source_position = home_position
+
+            # if altitude is not provided, use current altitude
+            if payload.d is None:
+                current_position = self.message_cache.get("avr/fcm/position/local")
+
+                if not current_position:
+                    logger.error(
+                        "Unable to complete goto request, local drone position data not initialized"
+                    )
+                    return
+
+                payload.d = current_position.d
 
         logger.info(
             f"Computing absolute position for {source_position.lat}, {source_position.lon}, {source_position.abs_alt}"
