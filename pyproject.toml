@@ -10,12 +10,14 @@
 [tool.poetry.dependencies]
     python             = ">=3.9,<3.12"
     loguru             = "0.7.0"
-    bell-avr-libraries = "0.2.0a4"
+    bell-avr-libraries = "0.2.0a6"
     mavsdk             = "1.4.8"
     bell-avr-pymavlink = "2.4.25"
+    pymap3d            = "3.0.1"
 
 [tool.poetry.group.dev.dependencies]
     pre-commit = "3.3.3"
+    nptyping   = "2.5.0"
 
 [tool.pyright]
     typeCheckingMode           = "basic"
