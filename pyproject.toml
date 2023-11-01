@@ -16,7 +16,7 @@
     pymap3d            = "3.0.1"
 
 [tool.poetry.group.dev.dependencies]
-    pre-commit = "3.4.0"
+    pre-commit = "3.5.0"
     nptyping   = "2.5.0"
 
 [tool.pyright]
