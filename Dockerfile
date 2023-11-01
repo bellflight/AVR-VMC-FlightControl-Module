@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.10 AS poetry-exporter
+FROM docker.io/library/python:3.12 AS poetry-exporter
 
 WORKDIR /work
 
@@ -9,8 +9,7 @@ COPY poetry.lock poetry.lock
 
 RUN poetry export -o requirements.txt
 
-# grpcio only has aarch64 builds for python 3.10
-FROM docker.io/library/python:3.10-bullseye
+FROM docker.io/library/python:3.12-bullseye
 
 ENV MAVLINK20=1
 ENV MAVLINK_DIALECT=bell
