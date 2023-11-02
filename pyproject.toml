@@ -8,15 +8,15 @@
     authors     = ["Nathan Vaughn <nvaughn51@gmail.com>"]
 
 [tool.poetry.dependencies]
-    python             = ">=3.9,<3.12"
+    python             = ">=3.9,<3.13"
     loguru             = "0.7.2"
-    bell-avr-libraries = "0.2.0a6"
+    bell-avr-libraries = "0.2.0a7"
     mavsdk             = "1.4.9"
     bell-avr-pymavlink = "2.4.25"
     pymap3d            = "3.0.1"
 
 [tool.poetry.group.dev.dependencies]
-    pre-commit = "3.4.0"
+    pre-commit = "3.5.0"
     nptyping   = "2.5.0"
 
 [tool.pyright]
@@ -24,6 +24,3 @@
     venvPath                   = "."
     venv                       = ".venv"
     reportMissingParameterType = true
-
-[tool.ruff]
-    ignore = ["E501"]

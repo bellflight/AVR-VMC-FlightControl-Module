@@ -450,7 +450,9 @@ class FlightControlComputer(MQTTModule):
                 command = mavutil.mavlink.MAV_CMD_NAV_WAYPOINT
                 param1 = 0  # hold time
                 param2 = 0  # accepteance radius
-                param3 = 0  # pass radius, 0 goes straight through / is ignored if hold time > 0
+                param3 = (
+                    0
+                )  # pass radius, 0 goes straight through / is ignored if hold time > 0
                 param4 = float("nan")  # yaw angle. NaN uses current yaw heading mode
 
             elif waypoint.waypoint_type == "LAND":
