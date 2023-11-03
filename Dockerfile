@@ -2,14 +2,14 @@ FROM docker.io/library/python:3.11 AS poetry-exporter
 
 WORKDIR /work
 
-RUN python -m pip install poetry
+RUN python -m pip install poetry poetry-plugin-export
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 RUN poetry export -o requirements.txt
 
-# pymavlink does not work iwht 3.12 as of Nov 2023
+# pymavlink does not work with 3.12 as of Nov 2023
 FROM docker.io/library/python:3.11-bullseye
 
 ENV MAVLINK20=1
