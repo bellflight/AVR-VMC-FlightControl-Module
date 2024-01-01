@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.11 AS poetry-exporter
+FROM docker.io/library/python:3.12 AS poetry-exporter
 
 WORKDIR /work
 
@@ -10,7 +10,7 @@ COPY poetry.lock poetry.lock
 RUN poetry export -o requirements.txt
 
 # pymavlink does not work with 3.12 as of Nov 2023
-FROM docker.io/library/python:3.11-bullseye
+FROM docker.io/library/python:3.12-bullseye
 
 ENV MAVLINK20=1
 ENV MAVLINK_DIALECT=bell
